@@ -3,16 +3,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import Database from 'better-sqlite3';
 import { createServer as createViteServer } from 'vite';
-import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
 import { Property } from './src/types';
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 async function startServer() {
   const app = express();
@@ -39,8 +35,14 @@ async function startServer() {
   });
 
   // SQLite Database Initialization
-  const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'estatein.db');
-  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+  const dbPath = process.env.DATABASE_PATH || './database/estatein.db';
+  const dbDir = (() => {
+    const normalized = dbPath.replace(/\\/g, '/');
+    const parts = normalized.split('/');
+    parts.pop();
+    return parts.join('/') || '.';
+  })();
+  fs.mkdirSync(dbDir, { recursive: true });
   const db = new Database(dbPath);
   db.pragma('journal_mode = WAL');
 
@@ -477,10 +479,10 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    const distPath = fileURLToPath(new URL('./', import.meta.url));
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      res.sendFile(fileURLToPath(new URL('./index.html', import.meta.url)));
     });
   }
 
