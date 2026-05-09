@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import Database from 'better-sqlite3';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
 import { Property } from './src/types';
@@ -38,7 +39,9 @@ async function startServer() {
   });
 
   // SQLite Database Initialization
-  const db = new Database('estatein.db');
+  const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'estatein.db');
+  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+  const db = new Database(dbPath);
   db.pragma('journal_mode = WAL');
 
   // Security Middleware
